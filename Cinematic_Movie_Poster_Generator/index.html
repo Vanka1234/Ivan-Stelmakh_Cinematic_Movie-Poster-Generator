@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cinematic Movie Poster Generator</title>
+  <style>
+    :root {
+      --bg: #08090d;
+      --panel: rgba(18, 20, 29, 0.74);
+      --panel-strong: rgba(22, 25, 36, 0.92);
+      --line: rgba(255, 255, 255, 0.12);
+      --line-strong: rgba(255, 255, 255, 0.22);
+      --text: #f4f1ea;
+      --muted: #aaa6a0;
+      --soft: rgba(255, 255, 255, 0.08);
+      --accent: #d7b56d;
+      --accent-2: #8aa8ff;
+      --danger: #dc4646;
+      --radius: 22px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --display: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(129, 49, 35, 0.28), transparent 34%),
+        radial-gradient(circle at 78% 12%, rgba(35, 77, 137, 0.27), transparent 35%),
+        radial-gradient(circle at 50% 100%, rgba(215, 181, 109, 0.11), transparent 42%),
+        linear-gradient(135deg, #06070a 0%, #10121a 48%, #06070a 100%);
+      color: var(--text);
+      font-family: var(--font);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black, transparent 82%);
+    }
+
+    .shell {
+      width: min(1480px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 12px 0 14px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      min-height: 74px;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.095), rgba(255,255,255,0.035));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, rgba(215,181,109,0.95), rgba(118,70,255,0.75)),
+        radial-gradient(circle at 30% 20%, white, transparent 34%);
+      position: relative;
+      box-shadow: 0 12px 34px rgba(215, 181, 109, 0.22);
+      flex: 0 0 auto;
+    }
+
+    .mark::after {
+      content: "";
+      position: absolute;
+      inset: 12px 9px;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 18px solid rgba(8, 9, 13, 0.85);
+      transform: translateX(2px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(20px, 2vw, 29px);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      max-width: 760px;
+    }
+
+    .portal-btn {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff;
+      background: rgba(255,255,255,0.07);
+      border-radius: 999px;
+      padding: 11px 15px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: 180ms ease;
+      white-space: nowrap;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .portal-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(215,181,109,0.62);
+      background: rgba(215,181,109,0.14);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) minmax(360px, 430px);
+      gap: 14px;
+      height: calc(100vh - 116px);
+      min-height: 650px;
+      margin-top: 12px;
+    }
+
+    .preview-panel,
+    .control-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(255,255,255,0.092), rgba(255,255,255,0.035));
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .preview-panel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 15px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #e9dfc8;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.2);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 18px var(--accent);
+    }
+
+    .poster-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 14px;
+      min-height: 0;
+    }
+
+    .poster-wrap {
+      position: relative;
+      height: 100%;
+      max-height: 100%;
+      aspect-ratio: 2 / 3;
+      display: grid;
+      place-items: center;
+    }
+
+    canvas {
+      width: auto;
+      height: min(100%, calc(100vh - 190px));
+      max-width: 100%;
+      aspect-ratio: 2 / 3;
+      border-radius: 18px;
+      background: #111;
+      box-shadow:
+        0 38px 90px rgba(0,0,0,0.62),
+        0 0 0 1px rgba(255,255,255,0.14),
+        inset 0 0 0 1px rgba(255,255,255,0.08);
+      display: block;
+    }
+
+    .hint-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 15px 13px;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .hint-strip span {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .controls-scroll {
+      padding: 12px;
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+
+    .card {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(7, 8, 12, 0.42);
+      border-radius: 18px;
+      padding: 11px;
+      margin-bottom: 10px;
+    }
+
+    .card:last-child {
+      margin-bottom: 0;
+    }
+
+    .card-title {
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: #e9dfc8;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .drop-zone {
+      position: relative;
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12px;
+      border: 1px dashed rgba(255,255,255,0.27);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.045);
+      cursor: pointer;
+      transition: 180ms ease;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.is-dragging {
+      border-color: var(--accent);
+      background: rgba(215, 181, 109, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .drop-zone strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .drop-zone small {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    label.field {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .field span,
+    .range-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.13);
+      background: rgba(0,0,0,0.26);
+      color: #fff;
+      border-radius: 12px;
+      padding: 9px 10px;
+      outline: none;
+      font: 700 12px var(--font);
+      transition: 160ms ease;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 44px;
+      max-height: 90px;
+      line-height: 1.35;
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(215,181,109,0.62);
+      box-shadow: 0 0 0 3px rgba(215,181,109,0.09);
+    }
+
+    select option {
+      color: #111;
+      background: #f5f5f5;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr 46px;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .range-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+
+    .range-value {
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 13px;
+      padding: 10px 9px;
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      font: 900 12px var(--font);
+      cursor: pointer;
+      transition: 160ms ease;
+      min-height: 40px;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.11);
+    }
+
+    .btn.primary {
+      color: #15100a;
+      background: linear-gradient(135deg, #f3d485, #d6a942);
+      border-color: rgba(255,255,255,0.18);
+      box-shadow: 0 12px 34px rgba(215,181,109,0.18);
+    }
+
+    .btn.dark {
+      background: rgba(0,0,0,0.32);
+    }
+
+    .btn.full {
+      grid-column: 1 / -1;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .metric {
+      min-height: 48px;
+      padding: 8px;
+      border-radius: 13px;
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.075);
+    }
+
+    .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric strong {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      line-height: 1.22;
+      word-break: break-word;
+    }
+
+    .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.55);
+      flex: 0 0 auto;
+      background: #777;
+    }
+
+    .info-text {
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .compact-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 10px;
+    }
+
+    @media (max-width: 1050px) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        height: auto;
+        min-height: 0;
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        height: min(72vh, 800px);
+      }
+
+      .control-panel {
+        overflow: visible;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100vw - 18px, 100%);
+        padding-top: 8px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 13px;
+      }
+
+      .portal-btn {
+        width: 100%;
+      }
+
+      .grid-2,
+      .grid-3,
+      .compact-controls,
+      .analysis-grid {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        height: min(70vh, 660px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <h1>Cinematic Movie Poster Generator</h1>
+          <p class="subtitle">Klientská webová aplikácia na tvorbu filmového plagátu z fotografie pomocou HTML Canvas, farebného gradingu, textovej typografie a exportu do PNG.</p>
+        </div>
+      </div>
+      <a class="portal-btn" id="backBtn" href="/">← Späť na portál</a>
+    </header>
+
+    <main class="app">
+      <section class="preview-panel" aria-label="Náhľad plagátu">
+        <div class="panel-head">
+          <p class="panel-title">Náhľad plagátu 2:3</p>
+          <div class="status-pill"><span class="dot"></span><span id="renderStatus">Demo plagát pripravený</span></div>
+        </div>
+        <div class="poster-stage">
+          <div class="poster-wrap">
+            <canvas id="posterCanvas" width="900" height="1350" aria-label="Vygenerovaný filmový plagát"></canvas>
+          </div>
+        </div>
+        <div class="hint-strip">
+          <span>Canvas API</span>
+          <span>getImageData / putImageData</span>
+          <span>Farebný grading</span>
+          <span>PNG export</span>
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="Ovládací panel">
+        <div class="controls-scroll">
+          <section class="card">
+            <h2 class="card-title">Fotografia</h2>
+            <label class="drop-zone" id="dropZone" for="imageInput">
+              <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <span>
+                <strong>Nahrať alebo presunúť obrázok</strong>
+                <small>JPG, PNG, WEBP alebo GIF. Spracovanie prebehne lokálne v prehliadači.</small>
+              </span>
+            </label>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Štýl a rozloženie</h2>
+            <div class="grid-2">
+              <label class="field">
+                <span>Žáner / štýl plagátu</span>
+                <select id="styleSelect"></select>
+              </label>
+              <label class="field">
+                <span>Layout</span>
+                <select id="layoutSelect">
+                  <option value="classic">Classic Poster</option>
+                  <option value="festival">Festival Poster</option>
+                  <option value="minimal">Minimal Poster</option>
+                  <option value="vertical">Vertical Title</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Text plagátu</h2>
+            <div class="grid-2">
+              <label class="field">
+                <span>Názov filmu</span>
+                <input id="titleInput" type="text" value="NOČNÝ SIGNÁL" maxlength="42" />
+              </label>
+              <label class="field">
+                <span>Podnadpis</span>
+                <input id="subtitleInput" type="text" value="Každá fotografia má svoj príbeh" maxlength="70" />
+              </label>
+              <label class="field">
+                <span>Rok</span>
+                <input id="yearInput" type="text" value="2026" maxlength="8" />
+              </label>
+              <label class="field">
+                <span>Rating</span>
+                <input id="ratingInput" type="text" value="PG-13" maxlength="10" />
+              </label>
+            </div>
+            <label class="field" style="margin-top: 8px;">
+              <span>Credits</span>
+              <textarea id="creditsInput" maxlength="180">STARRING YOU  DIRECTED BY MSAP CANVAS  MUSIC BY DIGITAL LIGHT  EDITED IN BROWSER</textarea>
+            </label>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Obrazové nastavenia</h2>
+            <div class="compact-controls">
+              <div>
+                <div class="range-title"><span class="range-label">Intenzita efektu</span><span class="range-value" id="effectValue">72</span></div>
+                <input id="effectRange" type="range" min="0" max="100" value="72" />
+              </div>
+              <div>
+                <div class="range-title"><span class="range-label">Kontrast</span><span class="range-value" id="contrastValue">16</span></div>
+                <input id="contrastRange" type="range" min="-50" max="70" value="16" />
+              </div>
+              <div>
+                <div class="range-title"><span class="range-label">Jas</span><span class="range-value" id="brightnessValue">0</span></div>
+                <input id="brightnessRange" type="range" min="-45" max="45" value="0" />
+              </div>
+              <div>
+                <div class="range-title"><span class="range-label">Filmové zrno</span><span class="range-value" id="grainValue">22</span></div>
+                <input id="grainRange" type="range" min="0" max="70" value="22" />
+              </div>
+              <div>
+                <div class="range-title"><span class="range-label">Vignetácia</span><span class="range-value" id="vignetteValue">55</span></div>
+                <input id="vignetteRange" type="range" min="0" max="100" value="55" />
+              </div>
+              <div>
+                <div class="range-title"><span class="range-label">Veľkosť titulku</span><span class="range-value" id="titleSizeValue">66</span></div>
+                <input id="titleSizeRange" type="range" min="32" max="100" value="66" />
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Akcie</h2>
+            <div class="grid-2">
+              <button class="btn primary" id="downloadBtn" type="button">Download PNG</button>
+              <button class="btn" id="randomBtn" type="button">Random title</button>
+              <button class="btn" id="demoBtn" type="button">Demo image</button>
+              <button class="btn" id="fitBtn" type="button">Fit image</button>
+              <button class="btn dark full" id="resetBtn" type="button">Reset</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Mini analýza obrázka</h2>
+            <div class="analysis-grid">
+              <div class="metric"><small>Rozlíšenie</small><strong id="metricResolution">900 × 1350 px</strong></div>
+              <div class="metric"><small>Formát</small><strong id="metricFormat">Demo canvas</strong></div>
+              <div class="metric"><small>Jas</small><strong id="metricBrightness">-</strong></div>
+              <div class="metric"><small>Kontrast</small><strong id="metricContrast">-</strong></div>
+              <div class="metric"><small>Dominantná farba</small><strong><span class="swatch" id="metricSwatch"></span><span id="metricDominant">-</span></strong></div>
+              <div class="metric"><small>Aktuálny štýl</small><strong id="metricStyle">Sci-Fi Neon</strong></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Ako to funguje?</h2>
+            <p class="info-text">Táto aplikácia používa HTML Canvas na spracovanie obrazu v prehliadači. Fotografia sa najprv oreže do filmového formátu plagátu, následne sa upraví jas, kontrast, farebný grading, vignetácia, filmové zrno a typografia. Výsledok je možné exportovať ako PNG obrázok.</p>
+          </section>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    const canvas = document.getElementById("posterCanvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const W = canvas.width;
+    const H = canvas.height;
+
+    const elements = {
+      backBtn: document.getElementById("backBtn"),
+      imageInput: document.getElementById("imageInput"),
+      dropZone: document.getElementById("dropZone"),
+      styleSelect: document.getElementById("styleSelect"),
+      layoutSelect: document.getElementById("layoutSelect"),
+      titleInput: document.getElementById("titleInput"),
+      subtitleInput: document.getElementById("subtitleInput"),
+      yearInput: document.getElementById("yearInput"),
+      ratingInput: document.getElementById("ratingInput"),
+      creditsInput: document.getElementById("creditsInput"),
+      effectRange: document.getElementById("effectRange"),
+      contrastRange: document.getElementById("contrastRange"),
+      brightnessRange: document.getElementById("brightnessRange"),
+      grainRange: document.getElementById("grainRange"),
+      vignetteRange: document.getElementById("vignetteRange"),
+      titleSizeRange: document.getElementById("titleSizeRange"),
+      effectValue: document.getElementById("effectValue"),
+      contrastValue: document.getElementById("contrastValue"),
+      brightnessValue: document.getElementById("brightnessValue"),
+      grainValue: document.getElementById("grainValue"),
+      vignetteValue: document.getElementById("vignetteValue"),
+      titleSizeValue: document.getElementById("titleSizeValue"),
+      downloadBtn: document.getElementById("downloadBtn"),
+      randomBtn: document.getElementById("randomBtn"),
+      demoBtn: document.getElementById("demoBtn"),
+      fitBtn: document.getElementById("fitBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      renderStatus: document.getElementById("renderStatus"),
+      metricResolution: document.getElementById("metricResolution"),
+      metricFormat: document.getElementById("metricFormat"),
+      metricBrightness: document.getElementById("metricBrightness"),
+      metricContrast: document.getElementById("metricContrast"),
+      metricSwatch: document.getElementById("metricSwatch"),
+      metricDominant: document.getElementById("metricDominant"),
+      metricStyle: document.getElementById("metricStyle")
+    };
+
+    const posterStyles = {
+      sciFi: {
+        name: "Sci-Fi Neon",
+        accent: "#7ee7ff",
+        accent2: "#d06cff",
+        titleColor: "#f7fdff",
+        shadowColor: "#0ff0ff",
+        contrast: 18,
+        saturation: 1.18,
+        gamma: 0.96,
+        scanlines: true,
+        particles: "stars"
+      },
+      horror: {
+        name: "Dark Horror",
+        accent: "#d94343",
+        accent2: "#2a0505",
+        titleColor: "#fff0e6",
+        shadowColor: "#c80000",
+        contrast: 35,
+        saturation: 0.78,
+        gamma: 1.08,
+        redShadows: true,
+        scratches: true
+      },
+      noir: {
+        name: "Noir Detective",
+        accent: "#e8e0ca",
+        accent2: "#5d6b78",
+        titleColor: "#f6f1df",
+        shadowColor: "#000000",
+        contrast: 45,
+        saturation: 0,
+        gamma: 1.0,
+        noir: true,
+        blinds: true
+      },
+      action: {
+        name: "Action Blockbuster",
+        accent: "#ffb04a",
+        accent2: "#3bc7ff",
+        titleColor: "#fff3d3",
+        shadowColor: "#ff6a00",
+        contrast: 28,
+        saturation: 1.2,
+        gamma: 0.94,
+        sparks: true
+      },
+      fantasy: {
+        name: "Fantasy Epic",
+        accent: "#f1d587",
+        accent2: "#8d70ff",
+        titleColor: "#fff4c7",
+        shadowColor: "#8d70ff",
+        contrast: 14,
+        saturation: 1.23,
+        gamma: 0.92,
+        particles: "dust"
+      },
+      retro: {
+        name: "Retro VHS",
+        accent: "#ff8bbd",
+        accent2: "#50e5d4",
+        titleColor: "#fff2d8",
+        shadowColor: "#2ee6ff",
+        contrast: 8,
+        saturation: 0.92,
+        gamma: 1.05,
+        vhs: true,
+        scanlines: true
+      },
+      romantic: {
+        name: "Romantic Drama",
+        accent: "#ffcabd",
+        accent2: "#ffd36b",
+        titleColor: "#fff5ef",
+        shadowColor: "#ff9a9e",
+        contrast: 3,
+        saturation: 1.08,
+        gamma: 0.88,
+        bokeh: true
+      },
+      cyberpunk: {
+        name: "Cyberpunk Night",
+        accent: "#ff42c7",
+        accent2: "#00d4ff",
+        titleColor: "#fdf7ff",
+        shadowColor: "#00d4ff",
+        contrast: 26,
+        saturation: 1.35,
+        gamma: 0.95,
+        scanlines: true,
+        grid: true
+      }
+    };
+
+    const randomTitles = [
+      ["TICHÝ KÓD", "Nie každý signál má byť nájdený"],
+      ["MESTO PO POLNOCI", "Keď zhasnú svetlá, začína príbeh"],
+      ["POSLEDNÝ ZÁBER", "Jedna fotografia zmení všetko"],
+      ["NEVIDITEĽNÁ HRANICA", "Realita sa dá orezať, pravda nie"],
+      ["DRUHÝ OBJEKTÍV", "Pozri sa ešte raz"],
+      ["SYNCHRONIZÁCIA", "Čas, obraz a pamäť v jednom zábere"],
+      ["VZDIALENÉ SVETLO", "Aj najtmavší rám má svoj zdroj"],
+      ["FRAME 27", "Obraz, ktorý nemal existovať"]
+    ];
+
+    const state = {
+      image: null,
+      imageMeta: { format: "Demo canvas", width: W, height: H },
+      fitMode: "fill",
+      isDemo: true,
+      renderQueued: false,
+      analysis: null
+    };
+
+    function clamp(value, min = 0, max = 255) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function mix(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      const value = parseInt(clean.length === 3 ? clean.split("").map(c => c + c).join("") : clean, 16);
+      return {
+        r: (value >> 16) & 255,
+        g: (value >> 8) & 255,
+        b: value & 255
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      return "#" + [r, g, b].map(v => clamp(Math.round(v)).toString(16).padStart(2, "0")).join("").toUpperCase();
+    }
+
+    function setCanvasTheme(style) {
+      document.documentElement.style.setProperty("--accent", style.accent);
+      document.documentElement.style.setProperty("--accent-2", style.accent2);
+    }
+
+    function getControls() {
+      return {
+        styleKey: elements.styleSelect.value,
+        layout: elements.layoutSelect.value,
+        title: elements.titleInput.value.trim() || "BEZ NÁZVU",
+        subtitle: elements.subtitleInput.value.trim() || "Filmový plagát vytvorený v prehliadači",
+        year: elements.yearInput.value.trim() || "2026",
+        rating: elements.ratingInput.value.trim() || "PG",
+        credits: elements.creditsInput.value.trim() || "CREATED WITH HTML CANVAS  MSAP PROJECT  LOCAL WEB APP",
+        effect: Number(elements.effectRange.value) / 100,
+        contrast: Number(elements.contrastRange.value),
+        brightness: Number(elements.brightnessRange.value),
+        grain: Number(elements.grainRange.value),
+        vignette: Number(elements.vignetteRange.value),
+        titleSize: Number(elements.titleSizeRange.value)
+      };
+    }
+
+    function updateRangeLabels() {
+      elements.effectValue.textContent = elements.effectRange.value;
+      elements.contrastValue.textContent = elements.contrastRange.value;
+      elements.brightnessValue.textContent = elements.brightnessRange.value;
+      elements.grainValue.textContent = elements.grainRange.value;
+      elements.vignetteValue.textContent = elements.vignetteRange.value;
+      elements.titleSizeValue.textContent = elements.titleSizeRange.value;
+    }
+
+    function queueRender() {
+      updateRangeLabels();
+      if (state.renderQueued) return;
+      state.renderQueued = true;
+      requestAnimationFrame(() => {
+        state.renderQueued = false;
+        renderPoster();
+      });
+    }
+
+    function loadImage(file) {
+      if (!file || !file.type.startsWith("image/")) return;
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        state.image = img;
+        state.isDemo = false;
+        state.imageMeta = {
+          format: file.type.split("/")[1]?.toUpperCase() || "Obrázok",
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          name: file.name
+        };
+        analyzeImage();
+        elements.renderStatus.textContent = "Fotografia spracovaná";
+        queueRender();
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        elements.renderStatus.textContent = "Obrázok sa nepodarilo načítať";
+      };
+      img.src = url;
+    }
+
+    function createDemoImage() {
+      const demo = document.createElement("canvas");
+      demo.width = 1200;
+      demo.height = 1800;
+      const d = demo.getContext("2d");
+
+      const sky = d.createLinearGradient(0, 0, 0, demo.height);
+      sky.addColorStop(0, "#101633");
+      sky.addColorStop(0.42, "#2e1631");
+      sky.addColorStop(0.7, "#3b1b13");
+      sky.addColorStop(1, "#050507");
+      d.fillStyle = sky;
+      d.fillRect(0, 0, demo.width, demo.height);
+
+      for (let i = 0; i < 240; i++) {
+        const x = Math.random() * demo.width;
+        const y = Math.random() * demo.height * 0.55;
+        const a = Math.random() * 0.65;
+        d.fillStyle = `rgba(255,255,255,${a})`;
+        d.fillRect(x, y, Math.random() * 2.2 + 0.5, Math.random() * 2.2 + 0.5);
+      }
+
+      const glow = d.createRadialGradient(820, 520, 20, 820, 520, 680);
+      glow.addColorStop(0, "rgba(255,189,95,0.88)");
+      glow.addColorStop(0.22, "rgba(255,92,90,0.32)");
+      glow.addColorStop(1, "rgba(255,92,90,0)");
+      d.fillStyle = glow;
+      d.fillRect(0, 0, demo.width, demo.height);
+
+      d.save();
+      d.globalAlpha = 0.82;
+      for (let i = 0; i < 9; i++) {
+        const baseY = 920 + i * 42;
+        d.beginPath();
+        d.moveTo(0, baseY + Math.sin(i) * 30);
+        for (let x = 0; x <= demo.width; x += 90) {
+          d.lineTo(x, baseY - 90 - Math.sin(x * 0.01 + i) * 70 - i * 18);
+        }
+        d.lineTo(demo.width, demo.height);
+        d.lineTo(0, demo.height);
+        d.closePath();
+        d.fillStyle = `rgba(${20 + i * 6}, ${18 + i * 4}, ${24 + i * 5}, ${0.55 - i * 0.025})`;
+        d.fill();
+      }
+      d.restore();
+
+      d.save();
+      d.translate(600, 1080);
+      d.fillStyle = "rgba(0,0,0,0.78)";
+      d.beginPath();
+      d.ellipse(0, 270, 188, 34, 0, 0, Math.PI * 2);
+      d.fill();
+      d.fillStyle = "#08090a";
+      d.beginPath();
+      d.ellipse(0, 0, 86, 126, 0, 0, Math.PI * 2);
+      d.fill();
+      d.fillRect(-54, 86, 108, 380);
+      d.beginPath();
+      d.moveTo(-54, 170);
+      d.lineTo(-205, 420);
+      d.lineTo(-132, 438);
+      d.lineTo(-20, 238);
+      d.closePath();
+      d.fill();
+      d.beginPath();
+      d.moveTo(54, 170);
+      d.lineTo(205, 420);
+      d.lineTo(132, 438);
+      d.lineTo(20, 238);
+      d.closePath();
+      d.fill();
+      d.restore();
+
+      d.save();
+      d.globalCompositeOperation = "screen";
+      const beam = d.createLinearGradient(160, 340, 920, 1120);
+      beam.addColorStop(0, "rgba(120,210,255,0)");
+      beam.addColorStop(0.52, "rgba(120,210,255,0.18)");
+      beam.addColorStop(1, "rgba(120,210,255,0)");
+      d.strokeStyle = beam;
+      d.lineWidth = 34;
+      d.beginPath();
+      d.moveTo(130, 330);
+      d.lineTo(930, 1160);
+      d.stroke();
+      d.restore();
+
+      const img = new Image();
+      img.onload = () => {
+        state.image = img;
+        state.isDemo = true;
+        state.imageMeta = { format: "Demo canvas", width: demo.width, height: demo.height };
+        analyzeImage();
+        elements.renderStatus.textContent = "Demo plagát pripravený";
+        queueRender();
+      };
+      img.src = demo.toDataURL("image/png");
+    }
+
+    function renderPoster() {
+      if (!state.image) {
+        createDemoImage();
+        return;
+      }
+
+      const controls = getControls();
+      const style = posterStyles[controls.styleKey];
+      setCanvasTheme(style);
+      elements.metricStyle.textContent = style.name;
+
+      ctx.save();
+      ctx.clearRect(0, 0, W, H);
+      drawBaseImage();
+      applyColorGrade();
+      drawLightEffects();
+      drawVignette();
+      drawGrain();
+      drawTypography();
+      drawPosterBorder();
+      ctx.restore();
+    }
+
+    function drawBaseImage() {
+      const img = state.image;
+      const imgW = img.naturalWidth || img.width;
+      const imgH = img.naturalHeight || img.height;
+      const targetRatio = W / H;
+      const sourceRatio = imgW / imgH;
+
+      ctx.save();
+      ctx.fillStyle = "#050507";
+      ctx.fillRect(0, 0, W, H);
+
+      if (state.fitMode === "fit") {
+        const bgScale = Math.max(W / imgW, H / imgH);
+        const bgW = imgW * bgScale;
+        const bgH = imgH * bgScale;
+        ctx.filter = "blur(24px) saturate(115%) brightness(70%)";
+        ctx.drawImage(img, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
+        ctx.filter = "none";
+        ctx.fillStyle = "rgba(0,0,0,0.28)";
+        ctx.fillRect(0, 0, W, H);
+
+        const scale = Math.min(W / imgW, H / imgH);
+        const dw = imgW * scale;
+        const dh = imgH * scale;
+        ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      } else {
+        let sx = 0;
+        let sy = 0;
+        let sw = imgW;
+        let sh = imgH;
+
+        if (sourceRatio > targetRatio) {
+          sw = imgH * targetRatio;
+          sx = (imgW - sw) / 2;
+        } else {
+          sh = imgW / targetRatio;
+          sy = (imgH - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      }
+      ctx.restore();
+    }
+
+    function applyColorGrade() {
+      const controls = getControls();
+      const style = posterStyles[controls.styleKey];
+      const imageData = ctx.getImageData(0, 0, W, H);
+      const data = imageData.data;
+      const intensity = controls.effect;
+      const userContrast = controls.contrast + style.contrast * 0.45;
+      const contrastFactor = (259 * (userContrast + 255)) / (255 * (259 - userContrast));
+      const brightness = controls.brightness;
+      const accent = hexToRgb(style.accent);
+      const accent2 = hexToRgb(style.accent2);
+
+      for (let i = 0; i < data.length; i += 4) {
+        const originalR = data[i];
+        const originalG = data[i + 1];
+        const originalB = data[i + 2];
+
+        let r = contrastFactor * (originalR - 128) + 128 + brightness;
+        let g = contrastFactor * (originalG - 128) + 128 + brightness;
+        let b = contrastFactor * (originalB - 128) + 128 + brightness;
+
+        r = 255 * Math.pow(clamp(r) / 255, style.gamma);
+        g = 255 * Math.pow(clamp(g) / 255, style.gamma);
+        b = 255 * Math.pow(clamp(b) / 255, style.gamma);
+
+        let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        const shadow = 1 - lum / 255;
+        const highlight = lum / 255;
+
+        if (style.noir) {
+          const mono = clamp((lum - 128) * 1.24 + 128);
+          r = mono * 1.02;
+          g = mono * 0.99;
+          b = mono * 0.91;
+        } else if (style.redShadows) {
+          r = r + 62 * shadow;
+          g = g * (0.9 - 0.16 * shadow);
+          b = b * (0.82 - 0.2 * shadow);
+          r += 18 * highlight;
+        } else if (controls.styleKey === "sciFi") {
+          r = r * 0.92 + accent2.r * 0.16 * highlight;
+          g = g * 1.02 + accent.g * 0.18 * shadow;
+          b = b * 1.12 + accent.b * 0.25 * shadow + accent2.b * 0.08 * highlight;
+        } else if (controls.styleKey === "action") {
+          r = r + 42 * highlight + accent.r * 0.05;
+          g = g + 20 * highlight + accent2.g * 0.08 * shadow;
+          b = b * 0.88 + accent2.b * 0.11 * shadow;
+        } else if (controls.styleKey === "fantasy") {
+          r = r + 28 * highlight + accent2.r * 0.08 * shadow;
+          g = g + 16 * highlight + accent.g * 0.08;
+          b = b + accent2.b * 0.15 * shadow;
+        } else if (controls.styleKey === "retro") {
+          r = r * 1.08 + 18;
+          g = g * 0.94 + 7;
+          b = b * 0.82 + 18 * shadow;
+          lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          r = mix(lum, r, 0.9);
+          g = mix(lum, g, 0.86);
+          b = mix(lum, b, 0.82);
+        } else if (controls.styleKey === "romantic") {
+          r = r + 28 * highlight + 18;
+          g = g + 10 * highlight + 8;
+          b = b + 12 * shadow;
+          r = mix(r, 255, 0.035);
+          g = mix(g, 238, 0.025);
+          b = mix(b, 230, 0.025);
+        } else if (controls.styleKey === "cyberpunk") {
+          r = r * 0.94 + accent.r * 0.26 * highlight + accent2.r * 0.08 * shadow;
+          g = g * 0.93 + accent2.g * 0.22 * shadow;
+          b = b * 1.12 + accent2.b * 0.2 * shadow + accent.b * 0.1 * highlight;
+        }
+
+        lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        const sat = style.saturation;
+        r = lum + (r - lum) * sat;
+        g = lum + (g - lum) * sat;
+        b = lum + (b - lum) * sat;
+
+        data[i] = clamp(mix(originalR, r, intensity));
+        data[i + 1] = clamp(mix(originalG, g, intensity));
+        data[i + 2] = clamp(mix(originalB, b, intensity));
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function drawVignette() {
+      const controls = getControls();
+      const style = posterStyles[controls.styleKey];
+      const amount = controls.vignette / 100;
+      const radius = style.noir || style.redShadows ? 0.78 : 0.86;
+      const gradient = ctx.createRadialGradient(W / 2, H * 0.44, W * 0.08, W / 2, H * 0.48, H * radius);
+      gradient.addColorStop(0, "rgba(0,0,0,0)");
+      gradient.addColorStop(0.55, "rgba(0,0,0,0.04)");
+      gradient.addColorStop(1, `rgba(0,0,0,${0.78 * amount})`);
+      ctx.save();
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+
+    function drawGrain() {
+      const controls = getControls();
+      const amount = controls.grain;
+      if (amount <= 0) return;
+
+      const density = Math.round(2200 + amount * 90);
+      ctx.save();
+      ctx.globalCompositeOperation = "overlay";
+      for (let i = 0; i < density; i++) {
+        const x = Math.random() * W;
+        const y = Math.random() * H;
+        const v = Math.random() > 0.5 ? 255 : 0;
+        const a = (Math.random() * amount) / 780;
+        ctx.fillStyle = `rgba(${v},${v},${v},${a})`;
+        ctx.fillRect(x, y, 1.1, 1.1);
+      }
+      ctx.restore();
+    }
+
+    function drawLightEffects() {
+      const controls = getControls();
+      const style = posterStyles[controls.styleKey];
+      const accent = hexToRgb(style.accent);
+      const accent2 = hexToRgb(style.accent2);
+      const intensity = controls.effect;
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+
+      const cornerGlow = ctx.createRadialGradient(W * 0.85, H * 0.13, 10, W * 0.85, H * 0.13, W * 0.75);
+      cornerGlow.addColorStop(0, `rgba(${accent.r},${accent.g},${accent.b},${0.32 * intensity})`);
+      cornerGlow.addColorStop(0.38, `rgba(${accent.r},${accent.g},${accent.b},${0.08 * intensity})`);
+      cornerGlow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = cornerGlow;
+      ctx.fillRect(0, 0, W, H);
+
+      const lowerLeak = ctx.createLinearGradient(0, H * 0.62, W, H);
+      lowerLeak.addColorStop(0, `rgba(${accent2.r},${accent2.g},${accent2.b},${0.0})`);
+      lowerLeak.addColorStop(0.55, `rgba(${accent2.r},${accent2.g},${accent2.b},${0.08 * intensity})`);
+      lowerLeak.addColorStop(1, `rgba(${accent.r},${accent.g},${accent.b},${0.18 * intensity})`);
+      ctx.fillStyle = lowerLeak;
+      ctx.fillRect(0, 0, W, H);
+
+      if (style.scanlines) drawScanlines(style);
+      if (style.redShadows) drawHorrorShadows(style);
+      if (style.blinds) drawNoirBlinds();
+      if (style.sparks) drawSparks(style);
+      if (style.particles) drawParticles(style, style.particles);
+      if (style.vhs) drawVhsGlitches(style);
+      if (style.grid) drawCyberGrid(style);
+      if (style.bokeh) drawBokeh(style);
+
+      ctx.restore();
+    }
+
+    function drawScanlines(style) {
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = "rgba(0,0,0,0.13)";
+      for (let y = 0; y < H; y += 5) {
+        ctx.fillRect(0, y, W, 1);
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const accent = hexToRgb(style.accent);
+      ctx.fillStyle = `rgba(${accent.r},${accent.g},${accent.b},0.035)`;
+      for (let y = 2; y < H; y += 11) {
+        ctx.fillRect(0, y, W, 1);
+      }
+      ctx.restore();
+    }
+
+    function drawHorrorShadows(style) {
+      const red = hexToRgb(style.accent);
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "rgba(0,0,0,0.16)");
+      g.addColorStop(0.5, "rgba(0,0,0,0)");
+      g.addColorStop(1, "rgba(0,0,0,0.52)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const fog = ctx.createRadialGradient(W * 0.25, H * 0.75, 20, W * 0.25, H * 0.75, W * 0.7);
+      fog.addColorStop(0, `rgba(${red.r},${red.g},${red.b},0.2)`);
+      fog.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = fog;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+
+    function drawNoirBlinds() {
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.translate(-W * 0.2, H * 0.08);
+      ctx.rotate(-0.18);
+      ctx.fillStyle = "rgba(0,0,0,0.36)";
+      for (let y = 0; y < H * 1.2; y += 96) {
+        ctx.fillRect(0, y, W * 1.6, 34);
+      }
+      ctx.restore();
+    }
+
+    function drawSparks(style) {
+      const accent = hexToRgb(style.accent);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 42; i++) {
+        const x = W * (0.18 + Math.random() * 0.64);
+        const y = H * (0.55 + Math.random() * 0.35);
+        const len = 10 + Math.random() * 42;
+        ctx.strokeStyle = `rgba(${accent.r},${accent.g},${accent.b},${0.12 + Math.random() * 0.38})`;
+        ctx.lineWidth = Math.random() * 2 + 0.6;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + len * 0.45, y - len);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawParticles(style, mode) {
+      const accent = hexToRgb(style.accent);
+      const accent2 = hexToRgb(style.accent2);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const count = mode === "stars" ? 130 : 90;
+      for (let i = 0; i < count; i++) {
+        const x = Math.random() * W;
+        const y = Math.random() * H * 0.72;
+        const radius = Math.random() * (mode === "stars" ? 1.8 : 3.4) + 0.5;
+        const useA = Math.random() > 0.5 ? accent : accent2;
+        ctx.fillStyle = `rgba(${useA.r},${useA.g},${useA.b},${0.16 + Math.random() * 0.35})`;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawVhsGlitches(style) {
+      const accent = hexToRgb(style.accent);
+      const accent2 = hexToRgb(style.accent2);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 9; i++) {
+        const y = Math.random() * H;
+        const h = 4 + Math.random() * 18;
+        ctx.fillStyle = i % 2 ? `rgba(${accent.r},${accent.g},${accent.b},0.12)` : `rgba(${accent2.r},${accent2.g},${accent2.b},0.12)`;
+        ctx.fillRect(Math.random() * -30, y, W + 60, h);
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.font = "700 22px 'Courier New', monospace";
+      ctx.fillText("REC  SP", 46, 64);
+      ctx.restore();
+    }
+
+    function drawCyberGrid(style) {
+      const accent = hexToRgb(style.accent2);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.strokeStyle = `rgba(${accent.r},${accent.g},${accent.b},0.16)`;
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 72) {
+        ctx.beginPath();
+        ctx.moveTo(x, H * 0.62);
+        ctx.lineTo(W / 2 + (x - W / 2) * 0.42, H);
+        ctx.stroke();
+      }
+      for (let y = H * 0.66; y < H; y += 48) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y + (y - H * 0.66) * 0.24);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawBokeh(style) {
+      const accent = hexToRgb(style.accent);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 18; i++) {
+        const r = 18 + Math.random() * 56;
+        const x = Math.random() * W;
+        const y = Math.random() * H;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(${accent.r},${accent.g},${accent.b},0.13)`);
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawTypography() {
+      const controls = getControls();
+      const style = posterStyles[controls.styleKey];
+      const layout = controls.layout;
+      const titleSize = 46 + controls.titleSize * 0.78;
+
+      ctx.save();
+      drawTextSafetyGradient(layout);
+      drawRatingBox(controls.rating, controls.year, style);
+
+      if (layout === "classic") {
+        drawClassicTypography(controls, style, titleSize);
+      } else if (layout === "festival") {
+        drawFestivalTypography(controls, style, titleSize);
+      } else if (layout === "minimal") {
+        drawMinimalTypography(controls, style, titleSize);
+      } else if (layout === "vertical") {
+        drawVerticalTypography(controls, style, titleSize);
+      }
+
+      drawCreditsBlock(controls.credits, style);
+      ctx.restore();
+    }
+
+    function drawTextSafetyGradient(layout) {
+      ctx.save();
+      let g;
+      if (layout === "minimal") {
+        g = ctx.createLinearGradient(0, H * 0.55, 0, H);
+        g.addColorStop(0, "rgba(0,0,0,0)");
+        g.addColorStop(0.64, "rgba(0,0,0,0.35)");
+        g.addColorStop(1, "rgba(0,0,0,0.74)");
+      } else {
+        g = ctx.createLinearGradient(0, H * 0.45, 0, H);
+        g.addColorStop(0, "rgba(0,0,0,0)");
+        g.addColorStop(0.62, "rgba(0,0,0,0.42)");
+        g.addColorStop(1, "rgba(0,0,0,0.88)");
+      }
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+
+    function drawRatingBox(rating, year, style) {
+      ctx.save();
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.font = "900 21px Inter, ui-sans-serif, system-ui, sans-serif";
+      const x = 46;
+      const y = 52;
+      const text = `${rating}  |  ${year}`;
+      const width = Math.max(150, ctx.measureText(text).width + 28);
+      roundedRect(ctx, x, y - 21, width, 42, 10);
+      ctx.fillStyle = "rgba(0,0,0,0.42)";
+      ctx.fill();
+      ctx.strokeStyle = style.accent;
+      ctx.globalAlpha = 0.88;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(255,255,255,0.94)";
+      ctx.fillText(text, x + 14, y + 1);
+      ctx.restore();
+    }
+
+    function drawClassicTypography(controls, style, titleSize) {
+      ctx.save();
+      ctx.textAlign = "center";
+      drawTrackingText(controls.subtitle.toUpperCase(), W / 2, H * 0.705, 5, 22, "rgba(255,255,255,0.82)", "center", "700");
+      drawTitleLines(controls.title, W / 2, H * 0.765, W * 0.84, titleSize, style, "center");
+      ctx.strokeStyle = style.accent;
+      ctx.globalAlpha = 0.72;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.18, H * 0.86);
+      ctx.lineTo(W * 0.82, H * 0.86);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawFestivalTypography(controls, style, titleSize) {
+      ctx.save();
+      drawLaurels(style);
+      drawTrackingText("OFICIÁLNY VÝBER  MSAP FILM FESTIVAL", W / 2, H * 0.13, 4, 22, "rgba(255,255,255,0.86)", "center", "800");
+      drawTitleLines(controls.title, W / 2, H * 0.71, W * 0.82, titleSize * 0.86, style, "center");
+      drawTrackingText(controls.subtitle.toUpperCase(), W / 2, H * 0.84, 3, 20, style.accent, "center", "900");
+      ctx.restore();
+    }
+
+    function drawMinimalTypography(controls, style, titleSize) {
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      drawTrackingText(controls.year, W * 0.86, H * 0.12, 2, 20, style.accent, "right", "900");
+      drawTitleLines(controls.title, W * 0.09, H * 0.765, W * 0.74, titleSize * 0.74, style, "left");
+      drawTrackingText(controls.subtitle.toUpperCase(), W * 0.09, H * 0.87, 3, 18, "rgba(255,255,255,0.82)", "left", "700");
+      ctx.restore();
+    }
+
+    function drawVerticalTypography(controls, style, titleSize) {
+      ctx.save();
+      drawTitleLines(controls.title, W * 0.14, H * 0.77, W * 0.64, titleSize * 0.68, style, "left");
+      ctx.save();
+      ctx.translate(W * 0.87, H * 0.18);
+      ctx.rotate(Math.PI / 2);
+      drawTrackingText(controls.title.toUpperCase(), 0, 0, 7, 38, style.accent, "left", "900");
+      ctx.restore();
+      drawTrackingText(controls.subtitle.toUpperCase(), W * 0.14, H * 0.875, 3, 19, "rgba(255,255,255,0.82)", "left", "800");
+      ctx.restore();
+    }
+
+    function drawTitleLines(text, x, y, maxWidth, maxSize, style, align) {
+      const clean = text.toUpperCase();
+      const lines = wrapTitle(clean, maxWidth, maxSize);
+      const lineHeight = maxSize * 0.88;
+      const total = lines.length * lineHeight;
+      let startY = y - total / 2 + lineHeight * 0.8;
+      ctx.save();
+      ctx.textAlign = align;
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = style.shadowColor;
+      ctx.shadowBlur = 22;
+      for (let i = 0; i < lines.length; i++) {
+        let size = maxSize;
+        ctx.font = `900 ${size}px ${getTitleFont()}`;
+        while (ctx.measureText(lines[i]).width > maxWidth && size > 32) {
+          size -= 2;
+          ctx.font = `900 ${size}px ${getTitleFont()}`;
+        }
+        const yy = startY + i * lineHeight;
+        ctx.lineWidth = Math.max(5, size * 0.08);
+        ctx.strokeStyle = "rgba(0,0,0,0.76)";
+        ctx.strokeText(lines[i], x, yy);
+        const grad = ctx.createLinearGradient(0, yy - size, 0, yy + size * 0.8);
+        grad.addColorStop(0, "#ffffff");
+        grad.addColorStop(0.58, style.titleColor);
+        grad.addColorStop(1, style.accent);
+        ctx.fillStyle = grad;
+        ctx.fillText(lines[i], x, yy);
+      }
+      ctx.restore();
+    }
+
+    function getTitleFont() {
+      return "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif";
+    }
+
+    function wrapTitle(text, maxWidth, fontSize) {
+      const words = text.split(/\s+/).filter(Boolean);
+      if (words.length <= 1) return [text];
+      const lines = [];
+      let current = "";
+      ctx.font = `900 ${fontSize}px ${getTitleFont()}`;
+      for (const word of words) {
+        const test = current ? `${current} ${word}` : word;
+        if (ctx.measureText(test).width <= maxWidth || !current) {
+          current = test;
+        } else {
+          lines.push(current);
+          current = word;
+        }
+      }
+      if (current) lines.push(current);
+      if (lines.length > 3) {
+        return [words.slice(0, Math.ceil(words.length / 2)).join(" "), words.slice(Math.ceil(words.length / 2)).join(" ")];
+      }
+      return lines;
+    }
+
+    function drawTrackingText(text, x, y, tracking, size, color, align = "center", weight = "700") {
+      ctx.save();
+      ctx.font = `${weight} ${size}px ${getBodyFont()}`;
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = color;
+      const chars = [...text];
+      const widths = chars.map(ch => ctx.measureText(ch).width);
+      const total = widths.reduce((a, b) => a + b, 0) + tracking * Math.max(0, chars.length - 1);
+      let start = x;
+      if (align === "center") start = x - total / 2;
+      if (align === "right") start = x - total;
+      for (let i = 0; i < chars.length; i++) {
+        ctx.fillText(chars[i], start, y);
+        start += widths[i] + tracking;
+      }
+      ctx.restore();
+    }
+
+    function getBodyFont() {
+      return "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    }
+
+    function drawCreditsBlock(text, style) {
+      ctx.save();
+      const clean = text.toUpperCase().replace(/\s+/g, " ");
+      const x = W / 2;
+      const y = H - 54;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "800 18px 'Arial Narrow', Arial, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.shadowColor = "rgba(0,0,0,0.8)";
+      ctx.shadowBlur = 10;
+      const lines = wrapSmallText(clean, W * 0.82, ctx.font);
+      lines.slice(0, 3).forEach((line, i) => ctx.fillText(line, x, y + i * 21));
+      ctx.fillStyle = style.accent;
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(W * 0.19, H - 88, W * 0.62, 1.3);
+      ctx.restore();
+    }
+
+    function wrapSmallText(text, maxWidth, font) {
+      ctx.font = font;
+      const words = text.split(" ");
+      const lines = [];
+      let current = "";
+      for (const word of words) {
+        const test = current ? `${current} ${word}` : word;
+        if (ctx.measureText(test).width <= maxWidth || !current) {
+          current = test;
+        } else {
+          lines.push(current);
+          current = word;
+        }
+      }
+      if (current) lines.push(current);
+      return lines;
+    }
+
+    function drawLaurels(style) {
+      ctx.save();
+      ctx.strokeStyle = style.accent;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.86;
+      const centerY = H * 0.145;
+      drawLaurelSide(W * 0.26, centerY, -1);
+      drawLaurelSide(W * 0.74, centerY, 1);
+      ctx.restore();
+    }
+
+    function drawLaurelSide(x, y, dir) {
+      for (let i = 0; i < 9; i++) {
+        ctx.beginPath();
+        ctx.ellipse(x + dir * i * 6, y + i * 9, 12, 4, dir * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawPosterBorder() {
+      const controls = getControls();
+      const style = posterStyles[controls.styleKey];
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(255,255,255,0.48)";
+      ctx.strokeRect(26, 26, W - 52, H - 52);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.strokeRect(38, 38, W - 76, H - 76);
+      ctx.strokeStyle = style.accent;
+      ctx.lineWidth = 5;
+      const l = 86;
+      ctx.beginPath();
+      ctx.moveTo(28, 28 + l);
+      ctx.lineTo(28, 28);
+      ctx.lineTo(28 + l, 28);
+      ctx.moveTo(W - 28 - l, 28);
+      ctx.lineTo(W - 28, 28);
+      ctx.lineTo(W - 28, 28 + l);
+      ctx.moveTo(28, H - 28 - l);
+      ctx.lineTo(28, H - 28);
+      ctx.lineTo(28 + l, H - 28);
+      ctx.moveTo(W - 28 - l, H - 28);
+      ctx.lineTo(W - 28, H - 28);
+      ctx.lineTo(W - 28, H - 28 - l);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function roundedRect(context, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      context.beginPath();
+      context.moveTo(x + r, y);
+      context.arcTo(x + width, y, x + width, y + height, r);
+      context.arcTo(x + width, y + height, x, y + height, r);
+      context.arcTo(x, y + height, x, y, r);
+      context.arcTo(x, y, x + width, y, r);
+      context.closePath();
+    }
+
+    function downloadPoster() {
+      renderPoster();
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const title = (elements.titleInput.value.trim() || "movie-poster").toLowerCase().replace(/[^a-z0-9áäčďéíĺľňóôŕšťúýž]+/gi, "-").replace(/^-|-$/g, "");
+        a.href = url;
+        a.download = `${title || "movie-poster"}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }, "image/png", 1);
+    }
+
+    function analyzeImage() {
+      if (!state.image) return;
+      const img = state.image;
+      const sample = document.createElement("canvas");
+      const maxSide = 180;
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
+      const scale = Math.min(maxSide / iw, maxSide / ih, 1);
+      sample.width = Math.max(1, Math.round(iw * scale));
+      sample.height = Math.max(1, Math.round(ih * scale));
+      const sctx = sample.getContext("2d", { willReadFrequently: true });
+      sctx.drawImage(img, 0, 0, sample.width, sample.height);
+      const data = sctx.getImageData(0, 0, sample.width, sample.height).data;
+
+      let lumSum = 0;
+      let lumSq = 0;
+      const buckets = new Map();
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        lumSum += lum;
+        lumSq += lum * lum;
+        const qr = Math.round(r / 32) * 32;
+        const qg = Math.round(g / 32) * 32;
+        const qb = Math.round(b / 32) * 32;
+        const key = `${qr},${qg},${qb}`;
+        buckets.set(key, (buckets.get(key) || 0) + 1);
+      }
+      const count = data.length / 4;
+      const mean = lumSum / count;
+      const variance = Math.max(0, lumSq / count - mean * mean);
+      const contrast = Math.sqrt(variance);
+      const dominantKey = [...buckets.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "128,128,128";
+      const [dr, dg, db] = dominantKey.split(",").map(Number);
+      const dominant = rgbToHex(dr, dg, db);
+
+      state.analysis = { brightness: mean, contrast, dominant };
+      elements.metricResolution.textContent = `${state.imageMeta.width} × ${state.imageMeta.height} px`;
+      elements.metricFormat.textContent = state.imageMeta.format;
+      elements.metricBrightness.textContent = `${Math.round((mean / 255) * 100)} %`;
+      elements.metricContrast.textContent = `${Math.round((contrast / 128) * 100)} %`;
+      elements.metricDominant.textContent = dominant;
+      elements.metricSwatch.style.background = dominant;
+    }
+
+    function resetControls() {
+      elements.styleSelect.value = "sciFi";
+      elements.layoutSelect.value = "classic";
+      elements.titleInput.value = "NOČNÝ SIGNÁL";
+      elements.subtitleInput.value = "Každá fotografia má svoj príbeh";
+      elements.yearInput.value = "2026";
+      elements.ratingInput.value = "PG-13";
+      elements.creditsInput.value = "STARRING YOU  DIRECTED BY MSAP CANVAS  MUSIC BY DIGITAL LIGHT  EDITED IN BROWSER";
+      elements.effectRange.value = 72;
+      elements.contrastRange.value = 16;
+      elements.brightnessRange.value = 0;
+      elements.grainRange.value = 22;
+      elements.vignetteRange.value = 55;
+      elements.titleSizeRange.value = 66;
+      state.fitMode = "fill";
+      elements.fitBtn.textContent = "Fit image";
+      updateRangeLabels();
+      queueRender();
+    }
+
+    function randomTitle() {
+      const pick = randomTitles[Math.floor(Math.random() * randomTitles.length)];
+      elements.titleInput.value = pick[0];
+      elements.subtitleInput.value = pick[1];
+      const styleKeys = Object.keys(posterStyles);
+      elements.styleSelect.value = styleKeys[Math.floor(Math.random() * styleKeys.length)];
+      const layouts = ["classic", "festival", "minimal", "vertical"];
+      elements.layoutSelect.value = layouts[Math.floor(Math.random() * layouts.length)];
+      queueRender();
+    }
+
+    function toggleFitMode() {
+      state.fitMode = state.fitMode === "fill" ? "fit" : "fill";
+      elements.fitBtn.textContent = state.fitMode === "fill" ? "Fit image" : "Fill image";
+      queueRender();
+    }
+
+    function populateStyles() {
+      for (const [key, style] of Object.entries(posterStyles)) {
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = style.name;
+        elements.styleSelect.appendChild(option);
+      }
+      elements.styleSelect.value = "sciFi";
+    }
+
+    function bindEvents() {
+      elements.imageInput.addEventListener("change", event => {
+        const file = event.target.files?.[0];
+        loadImage(file);
+      });
+
+      ["dragenter", "dragover"].forEach(type => {
+        elements.dropZone.addEventListener(type, event => {
+          event.preventDefault();
+          elements.dropZone.classList.add("is-dragging");
+        });
+      });
+
+      ["dragleave", "drop"].forEach(type => {
+        elements.dropZone.addEventListener(type, event => {
+          event.preventDefault();
+          elements.dropZone.classList.remove("is-dragging");
+        });
+      });
+
+      elements.dropZone.addEventListener("drop", event => {
+        const file = event.dataTransfer?.files?.[0];
+        loadImage(file);
+      });
+
+      const liveControls = [
+        elements.styleSelect,
+        elements.layoutSelect,
+        elements.titleInput,
+        elements.subtitleInput,
+        elements.yearInput,
+        elements.ratingInput,
+        elements.creditsInput,
+        elements.effectRange,
+        elements.contrastRange,
+        elements.brightnessRange,
+        elements.grainRange,
+        elements.vignetteRange,
+        elements.titleSizeRange
+      ];
+
+      liveControls.forEach(control => {
+        control.addEventListener("input", queueRender);
+        control.addEventListener("change", queueRender);
+      });
+
+      elements.styleSelect.addEventListener("change", () => {
+        const style = posterStyles[elements.styleSelect.value];
+        elements.metricStyle.textContent = style.name;
+      });
+
+      elements.downloadBtn.addEventListener("click", downloadPoster);
+      elements.randomBtn.addEventListener("click", randomTitle);
+      elements.resetBtn.addEventListener("click", resetControls);
+      elements.demoBtn.addEventListener("click", createDemoImage);
+      elements.fitBtn.addEventListener("click", toggleFitMode);
+    }
+
+    function init() {
+      populateStyles();
+      bindEvents();
+      updateRangeLabels();
+      createDemoImage();
+    }
+
+    init();
+  </script>
+</body>
+</html>
